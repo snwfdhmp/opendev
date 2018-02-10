@@ -1,0 +1,5 @@
+[core]
+	bare = true
+[remote "origin"]
+	url = https://github.com/snwfdhmp/devtest
+	fetch = +refs/heads/*:refs/remotes/origin/*
