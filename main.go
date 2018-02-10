@@ -41,16 +41,15 @@ func main() {
 		return
 	}
 
-	var history RepoState
+	var repo RepoState
 	var tasks []Task
-	var repo = make(RepoState)
 
 	if err = yaml.Unmarshal(file, &tasks); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	if err = yaml.Unmarshal(historyFile, &history); err != nil {
+	if err = yaml.Unmarshal(historyFile, &repo); err != nil {
 		fmt.Println(err)
 		return
 	}
@@ -69,7 +68,7 @@ func main() {
 
 	commit := head.Hash().String()
 
-	if _, ok := history[commit]; ok {
+	if _, ok := repo[commit]; ok {
 		fmt.Printf("Commit '%s' has already been tested.\n", commit)
 		return
 	}
