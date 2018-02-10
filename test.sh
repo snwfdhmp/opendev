@@ -1,3 +1,3 @@
 #!/bin/zsh
 
-return false
+return true
