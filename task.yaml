@@ -1,2 +1,4 @@
 - name: compile
   test: go install
+- name: unit_tests
+  test: ./test.sh
