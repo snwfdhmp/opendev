@@ -26,10 +26,7 @@ type TaskState struct {
 	Pass bool
 }
 
-type RepoState struct {
-	TaskStates []TaskState
-	Commit     string
-}
+type RepoState map[string][]TaskState
 
 func main() {
 	file, err := afero.ReadFile(fs, "task.yaml")
@@ -38,29 +35,24 @@ func main() {
 		return
 	}
 
+	historyFile, err := afero.ReadFile(fs, "./.opendev/history.yaml")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	var history RepoState
 	var tasks []Task
-	var repo RepoState
+	var repo = make(RepoState)
 
 	if err = yaml.Unmarshal(file, &tasks); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	for _, t := range tasks {
-		fmt.Print("task['" + t.Name + "'] : ")
-		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
-			fmt.Println("FAIL")
-			repo.TaskStates = append(repo.TaskStates, TaskState{
-				Task: &t,
-				Pass: false,
-			})
-			continue
-		}
-		fmt.Println("PASS")
-		repo.TaskStates = append(repo.TaskStates, TaskState{
-			Task: &t,
-			Pass: true,
-		})
+	if err = yaml.Unmarshal(historyFile, &history); err != nil {
+		fmt.Println(err)
+		return
 	}
 
 	gitRepo, err := git.PlainOpen("./")
@@ -75,13 +67,29 @@ func main() {
 		return
 	}
 
-	commit, err := gitRepo.CommitObject(head.Hash())
-	if err != nil {
-		fmt.Println("fatal:", err)
+	commit := head.Hash().String()
+
+	if _, ok := history[commit]; ok {
+		fmt.Printf("Commit '%s' has already been tested.\n", commit)
 		return
 	}
 
-	repo.Commit = commit.String()
+	for _, t := range tasks {
+		fmt.Print("task['" + t.Name + "'] : ")
+		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
+			fmt.Println("FAIL")
+			repo[commit] = append(repo[commit], TaskState{
+				Task: &t,
+				Pass: false,
+			})
+			continue
+		}
+		fmt.Println("PASS")
+		repo[commit] = append(repo[commit], TaskState{
+			Task: &t,
+			Pass: true,
+		})
+	}
 
 	if err := fs.MkdirAll("./.opendev", 0700); err != nil {
 		fmt.Println(err)

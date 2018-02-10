@@ -1,2 +1,2 @@
-- name: Compile
+- name: compile
   test: go install
