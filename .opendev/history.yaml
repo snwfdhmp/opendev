@@ -1,0 +1,5 @@
+dc17e9c60158b01131289e01fe3b0ff6e8d8d47c:
+- task:
+    name: compile
+    test: go install
+  pass: true
