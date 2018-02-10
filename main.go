@@ -21,12 +21,18 @@ type Task struct {
 	Test string
 }
 
-type TaskState struct {
-	Task *Task
-	Pass bool
-}
+type RepoState map[string]map[string]bool
 
-type RepoState map[string][]TaskState
+// commit:
+// 	test: true
+
+func (r *RepoState) Add(commit string, testName string, testValue bool) {
+	if _, ok := (*r)[commit]; !ok {
+		(*r)[commit] = make(map[string]bool)
+	}
+
+	(*r)[commit][testName] = testValue
+}
 
 func main() {
 	file, err := afero.ReadFile(fs, "task.yaml")
@@ -41,7 +47,7 @@ func main() {
 		return
 	}
 
-	var repo RepoState
+	var repo = make(RepoState)
 	var tasks []Task
 
 	if err = yaml.Unmarshal(file, &tasks); err != nil {
@@ -77,17 +83,11 @@ func main() {
 		fmt.Print("task['" + t.Name + "'] : ")
 		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
 			fmt.Println("FAIL")
-			repo[commit] = append(repo[commit], TaskState{
-				Task: &t,
-				Pass: false,
-			})
+			repo.Add(commit, t.Name, false)
 			continue
 		}
 		fmt.Println("PASS")
-		repo[commit] = append(repo[commit], TaskState{
-			Task: &t,
-			Pass: true,
-		})
+		repo.Add(commit, t.Name, true)
 	}
 
 	if err := fs.MkdirAll("./.opendev", 0700); err != nil {
