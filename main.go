@@ -21,17 +21,23 @@ type Task struct {
 	Test string
 }
 
-type RepoState map[string]map[string]bool
+type History struct {
+	States map[string]map[string]bool
+	Tip    string
+}
 
 // commit:
 // 	test: true
 
-func (r *RepoState) Add(commit string, testName string, testValue bool) {
-	if _, ok := (*r)[commit]; !ok {
-		(*r)[commit] = make(map[string]bool)
+func (r *History) Add(commit string, testName string, testValue bool) {
+	if r.States == nil {
+		r.States = make(map[string]map[string]bool)
+	}
+	if _, ok := r.States[commit]; !ok {
+		r.States[commit] = make(map[string]bool)
 	}
 
-	(*r)[commit][testName] = testValue
+	r.States[commit][testName] = testValue
 }
 
 func main() {
@@ -47,7 +53,7 @@ func main() {
 		return
 	}
 
-	var repo = make(RepoState)
+	var repo History
 	var tasks []Task
 
 	if err = yaml.Unmarshal(file, &tasks); err != nil {
@@ -74,7 +80,7 @@ func main() {
 
 	commit := head.Hash().String()
 
-	if _, ok := repo[commit]; ok {
+	if _, ok := repo.States[commit]; ok {
 		fmt.Printf("Commit '%s' has already been tested.\n", commit)
 		return
 	}
@@ -89,6 +95,8 @@ func main() {
 		fmt.Println("PASS")
 		repo.Add(commit, t.Name, true)
 	}
+
+	repo.Tip = commit
 
 	if err := fs.MkdirAll("./.opendev", 0700); err != nil {
 		fmt.Println(err)
