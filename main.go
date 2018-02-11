@@ -17,7 +17,8 @@ import (
 var (
 	fs = afero.NewOsFs()
 
-	appDir = "./.opendev"
+	repoDir = "../.."
+	appDir  = filepath.Join(repoDir, ".opendev")
 )
 
 type Task struct {
@@ -78,7 +79,7 @@ func wordFor(b bool) string {
 // 	test: true
 
 func gitHead() (string, error) {
-	gitRepo, err := git.PlainOpen("./")
+	gitRepo, err := git.PlainOpen(repoDir)
 	if err != nil {
 		return "", err
 	}
@@ -114,7 +115,7 @@ func (h *History) Run(tasks ...Task) (report RunReport, err error) {
 
 	for _, t := range tasks {
 		var state bool
-		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
+		if err := exec.Command("/bin/zsh", "-c", "cd "+repoDir+";"+t.Test).Run(); err != nil {
 			state = false
 		} else {
 			state = true
