@@ -206,7 +206,7 @@ func ParseTasks(path string) (tasks []Task, err error) {
 
 func main() {
 	var err error
-	repoDir, err = filepath.Abs("./..") //@todo better
+	repoDir, err = filepath.Abs("./..") //@todo better (search or git config)
 	if err != nil {
 		fmt.Println("fatal:", err)
 		return
