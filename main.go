@@ -236,6 +236,8 @@ func main() {
 		fmt.Println("fatal:", err)
 		return
 	}
+
+	os.Exit(0)
 }
 
 //tmp: commit
