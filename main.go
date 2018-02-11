@@ -177,7 +177,7 @@ func (h *History) Save() error {
 func OpenHistory() (*History, error) {
 	var h History
 
-	file, err := afero.ReadFile(fs, filepath.Join(appDir, "history.yaml"))
+	file, err := afero.ReadFile(fs, filepath.Join(appDir, "history.yaml")) //@todo config
 	if err != nil {
 		return nil, err
 	}
