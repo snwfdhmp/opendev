@@ -32,47 +32,39 @@ type History struct {
 }
 
 type RunReport struct {
-	States  map[string]bool
-	Rewards map[string]int
+	Tests map[string]TestReport
+}
+
+type TestReport struct {
+	State  bool
+	Reward int
 }
 
 func NewRunReport() *RunReport {
-	return &RunReport{make(map[string]bool), make(map[string]int)}
+	return &RunReport{make(map[string]TestReport)}
 }
 
 func (r *RunReport) Add(testName string, state bool, reward int) {
-	if r.States == nil {
-		r.States = make(map[string]bool)
-	}
-	if r.Rewards == nil {
-		r.States = make(map[string]bool)
+	if r.Tests == nil {
+		r.Tests = make(map[string]TestReport)
 	}
 
-	r.States[testName] = state
-	r.Rewards[testName] = reward
+	r.Tests[testName] = TestReport{state, reward}
 }
 
 func (r *RunReport) Print() {
-	if len(r.States) < 1 {
+	if len(r.Tests) < 1 {
 		return
 	}
-	fmt.Println("States:")
-	for n, s := range r.States {
-		fmt.Println(n+":", wordFor(s))
-	}
-
-	if len(r.Rewards) < 1 {
-		return
-	}
-	fmt.Println("Rewards:")
 	total := 0
-	for n, s := range r.Rewards {
-		fmt.Println(n+":", s)
-		total += s
+	for n, t := range r.Tests {
+		fmt.Printf("%s: %s. Reward: %s", n, wordFor(t.State), t.Reward)
+		total += t.Reward
 	}
-	if len(r.Rewards) > 1 {
+	if len(r.Tests) > 1 {
 		fmt.Println("total:", total)
 	}
+
 }
 
 func wordFor(b bool) string {
