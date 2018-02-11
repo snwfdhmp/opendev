@@ -21,13 +21,35 @@ var (
 )
 
 type Task struct {
-	Name string
-	Test string
+	Name   string
+	Test   string
+	Reward int
 }
 
 type History struct {
 	States map[string]map[string]bool
 	Tip    string
+}
+
+type RunReport struct {
+	States  map[string]bool
+	Rewards map[string]int
+}
+
+func NewRunReport() *RunReport {
+	return &RunReport{make(map[string]bool), make(map[string]int)}
+}
+
+func (r *RunReport) Add(testName string, state bool, reward int) {
+	if r.States == nil {
+		r.States = make(map[string]bool)
+	}
+	if r.Rewards == nil {
+		r.States = make(map[string]bool)
+	}
+
+	r.States[testName] = state
+	r.Rewards[testName] = reward
 }
 
 // commit:
@@ -47,27 +69,53 @@ func gitHead() (string, error) {
 	return head.Hash().String(), nil
 }
 
-func (h *History) Run(tasks ...Task) error {
+// func (h *History) GetStates(commit string) (map[string]bool, bool) {
+// 	s, ok := h.States[commit]
+// 	return s, ok
+// }
+
+// func (h *History) GetLastState(testName string) (bool, bool) {
+// 	s, ok := h.States[h.Tip][testName]
+// 	return s, ok
+// }
+
+func (h *History) Run(tasks ...Task) (report RunReport, err error) {
 	commit, err := gitHead()
 	if err != nil {
-		return err
+		return
 	}
 
 	if _, ok := h.States[commit]; ok {
-		return errors.New(fmt.Sprintf("commit '%s' has already been tested", commit))
+		err = errors.New(fmt.Sprintf("commit '%.6s' has already been tested", commit))
+		return
 	}
 
 	for _, t := range tasks {
+		var state bool
 		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
-			h.Add(commit, t.Name, false)
+			state = false
+		} else {
+			state = true
+		}
+		h.Add(commit, t.Name, state)
+		lastState, ok := h.States[h.Tip][t.Name]
+		if !ok {
+			err = errors.New(fmt.Sprintf("cannot access %.6s/%s in history"))
+			return
+		}
+		if lastState == state {
 			continue
 		}
-		h.Add(commit, t.Name, true)
+		reward := t.Reward
+		if lastState == true && state == false {
+			reward = (-2) * t.Reward
+		}
+		report.Add(t.Name, state, reward)
 	}
 
 	h.Tip = commit
 
-	return nil
+	return
 }
 
 func (h *History) Add(commit string, testName string, testValue bool) {

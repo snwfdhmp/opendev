@@ -1,4 +1,6 @@
 - name: compile
   test: go install
+  reward: 1
 - name: unit_tests
   test: ./test.sh
+  reward: 2
