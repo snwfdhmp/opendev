@@ -18,7 +18,9 @@ var (
 	fs = afero.NewOsFs()
 
 	repoDir string
-	appDir  = filepath.Join(repoDir, ".opendev")
+	appDir  = func() string {
+		return filepath.Join(repoDir, ".opendev")
+	}
 )
 
 type Task struct {
@@ -153,11 +155,11 @@ func (h *History) Add(commit string, testName string, testValue bool) {
 }
 
 func (h *History) Save() error {
-	if err := fs.MkdirAll(appDir, 0700); err != nil {
+	if err := fs.MkdirAll(appDir(), 0700); err != nil {
 		return err
 	}
 
-	out, err := fs.OpenFile(filepath.Join(appDir, "history.yaml"), os.O_CREATE|os.O_WRONLY, 0700)
+	out, err := fs.OpenFile(filepath.Join(appDir(), "history.yaml"), os.O_CREATE|os.O_WRONLY, 0700)
 	if err != nil {
 		return err
 	}
@@ -177,7 +179,7 @@ func (h *History) Save() error {
 func OpenHistory() (*History, error) {
 	var h History
 
-	file, err := afero.ReadFile(fs, filepath.Join(appDir, "history.yaml")) //@todo config
+	file, err := afero.ReadFile(fs, filepath.Join(appDir(), "history.yaml")) //@todo config
 	if err != nil {
 		return nil, err
 	}
