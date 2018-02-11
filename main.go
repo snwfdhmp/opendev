@@ -17,7 +17,7 @@ import (
 var (
 	fs = afero.NewOsFs()
 
-	repoDir = "../.."
+	repoDir = "./"
 	appDir  = filepath.Join(repoDir, ".opendev")
 )
 
