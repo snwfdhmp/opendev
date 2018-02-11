@@ -132,9 +132,17 @@ func ParseTasks(path string) (tasks []Task, err error) {
 }
 
 func main() {
-
 	repo, err := OpenHistory()
-	tasks := ParseTasks("task.yaml")
+	if err != nil {
+		fmt.Println("fatal:", err)
+		return
+	}
+
+	tasks, err := ParseTasks("task.yaml")
+	if err != nil {
+		fmt.Println("fatal:", err)
+		return
+	}
 
 	if err := repo.Run(tasks...); err != nil {
 		fmt.Println("fatal:", err)
