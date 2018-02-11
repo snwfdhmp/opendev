@@ -218,7 +218,7 @@ func main() {
 		return
 	}
 
-	tasks, err := ParseTasks("task.yaml")
+	tasks, err := ParseTasks(filepath.Join(repoDir, "task.yaml"))
 	if err != nil {
 		fmt.Println("fatal:", err)
 		return
