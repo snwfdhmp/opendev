@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -32,7 +33,30 @@ type History struct {
 // commit:
 // 	test: true
 
-func (h *History) Run(tasks ...Task) {
+func gitHead() (string, error) {
+	gitRepo, err := git.PlainOpen("./")
+	if err != nil {
+		return "", err
+	}
+
+	head, err := gitRepo.Head()
+	if err != nil {
+		return "", err
+	}
+
+	return head.Hash().String(), nil
+}
+
+func (h *History) Run(tasks ...Task) error {
+	commit, err := gitHead()
+	if err != nil {
+		return err
+	}
+
+	if _, ok := h.States[commit]; ok {
+		return errors.New(fmt.Sprintf("commit '%s' has already been tested", commit))
+	}
+
 	for _, t := range tasks {
 		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
 			h.Add(commit, t.Name, false)
@@ -40,6 +64,10 @@ func (h *History) Run(tasks ...Task) {
 		}
 		h.Add(commit, t.Name, true)
 	}
+
+	h.Tip = commit
+
+	return nil
 }
 
 func (h *History) Add(commit string, testName string, testValue bool) {
@@ -75,54 +103,43 @@ func (h *History) Save() error {
 	return nil
 }
 
-func main() {
-	file, err := afero.ReadFile(fs, "task.yaml")
+func OpenHistory() (*History, error) {
+	var h History
+
+	file, err := afero.ReadFile(fs, "./.opendev/history.yaml")
 	if err != nil {
-		fmt.Println(err)
-		return
+		return nil, err
 	}
 
-	historyFile, err := afero.ReadFile(fs, "./.opendev/history.yaml")
-	if err != nil {
-		fmt.Println(err)
-		return
+	if err = yaml.Unmarshal(file, &h); err != nil {
+		return nil, err
 	}
 
-	var repo History
-	var tasks []Task
+	return &h, nil
+}
+
+func ParseTasks(path string) (tasks []Task, err error) {
+	file, err := afero.ReadFile(fs, path)
+	if err != nil {
+		return
+	}
 
 	if err = yaml.Unmarshal(file, &tasks); err != nil {
-		fmt.Println(err)
 		return
 	}
 
-	if err = yaml.Unmarshal(historyFile, &repo); err != nil {
-		fmt.Println(err)
-		return
-	}
+	return
+}
 
-	gitRepo, err := git.PlainOpen("./")
-	if err != nil {
+func main() {
+
+	repo, err := OpenHistory()
+	tasks := ParseTasks("task.yaml")
+
+	if err := repo.Run(tasks...); err != nil {
 		fmt.Println("fatal:", err)
 		return
 	}
-
-	head, err := gitRepo.Head()
-	if err != nil {
-		fmt.Println("fatal:", err)
-		return
-	}
-
-	commit := head.Hash().String()
-
-	if _, ok := repo.States[commit]; ok {
-		fmt.Printf("Commit '%s' has already been tested.\n", commit)
-		return
-	}
-
-	repo.Run(tasks...)
-
-	repo.Tip = commit
 
 	if err := repo.Save(); err != nil {
 		fmt.Println("fatal:", err)
