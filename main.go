@@ -115,7 +115,7 @@ func (h *History) Run(tasks ...Task) (report RunReport, err error) {
 
 	for _, t := range tasks {
 		var state bool
-		if err := exec.Command("/bin/zsh", "-c", "cd "+repoDir+";"+t.Test).Run(); err != nil {
+		if err := exec.Command("/bin/zsh", "-c", "'cd "+repoDir+";"+t.Test+"'").Run(); err != nil {
 			state = false
 		} else {
 			state = true
