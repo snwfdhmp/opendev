@@ -17,7 +17,7 @@ import (
 var (
 	fs = afero.NewOsFs()
 
-	repoDir = ""
+	repoDir string
 	appDir  = filepath.Join(repoDir, ".opendev")
 )
 
@@ -203,6 +203,12 @@ func ParseTasks(path string) (tasks []Task, err error) {
 }
 
 func main() {
+	repoDir, err := filepath.Abs("./")
+	if err != nil {
+		fmt.Println("fatal:", err)
+		return
+	}
+
 	repo, err := OpenHistory()
 	if err != nil {
 		fmt.Println("fatal:", err)
