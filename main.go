@@ -203,7 +203,8 @@ func ParseTasks(path string) (tasks []Task, err error) {
 }
 
 func main() {
-	repoDir, err := filepath.Abs("./")
+	var err error
+	repoDir, err = filepath.Abs("./")
 	if err != nil {
 		fmt.Println("fatal:", err)
 		return
