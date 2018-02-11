@@ -58,7 +58,7 @@ func (r *RunReport) Print() {
 	}
 	total := 0
 	for n, t := range r.Tests {
-		fmt.Printf("%s: %s. Reward: %s", n, wordFor(t.State), t.Reward)
+		fmt.Printf("%s: %s. Reward: %d", n, wordFor(t.State), t.Reward)
 		total += t.Reward
 	}
 	if len(r.Tests) > 1 {
