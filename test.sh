@@ -1,3 +1,3 @@
 #!/bin/zsh
 
-exit 1
+exit 0
