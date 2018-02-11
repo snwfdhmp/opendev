@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 	"gopkg.in/src-d/go-git.v4"
@@ -14,6 +15,8 @@ import (
 
 var (
 	fs = afero.NewOsFs()
+
+	appDir = "./.opendev"
 )
 
 type Task struct {
@@ -29,15 +32,37 @@ type History struct {
 // commit:
 // 	test: true
 
-func (r *History) Add(commit string, testName string, testValue bool) {
-	if r.States == nil {
-		r.States = make(map[string]map[string]bool)
+func (h *History) Add(commit string, testName string, testValue bool) {
+	if h.States == nil {
+		h.States = make(map[string]map[string]bool)
 	}
-	if _, ok := r.States[commit]; !ok {
-		r.States[commit] = make(map[string]bool)
+	if _, ok := h.States[commit]; !ok {
+		h.States[commit] = make(map[string]bool)
 	}
 
-	r.States[commit][testName] = testValue
+	h.States[commit][testName] = testValue
+}
+
+func (h *History) Save() error {
+	if err := fs.MkdirAll(appDir, 0700); err != nil {
+		return err
+	}
+
+	out, err := fs.OpenFile(filepath.Join(appDir, "history.yaml"), os.O_CREATE|os.O_WRONLY, 0700)
+	if err != nil {
+		return err
+	}
+
+	b, err := yaml.Marshal(h)
+	if err != nil {
+		return err
+	}
+
+	if _, err := out.Write(b); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
@@ -98,24 +123,7 @@ func main() {
 
 	repo.Tip = commit
 
-	if err := fs.MkdirAll("./.opendev", 0700); err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	out, err := fs.OpenFile("./.opendev/history.yaml", os.O_CREATE|os.O_WRONLY, 0700)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	b, err := yaml.Marshal(repo)
-	if err != nil {
-		fmt.Println("fatal:", err)
-		return
-	}
-
-	if _, err := out.Write(b); err != nil {
+	if err := repo.Save(); err != nil {
 		fmt.Println("fatal:", err)
 		return
 	}

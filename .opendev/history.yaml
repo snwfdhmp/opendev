@@ -1,5 +1,8 @@
-dc17e9c60158b01131289e01fe3b0ff6e8d8d47c:
-- task:
-    name: compile
-    test: go install
-  pass: true
+states:
+  15ae30a657637cd0f963133684dbdf702e5b81ca:
+    compile: true
+    unit_tests: true
+  5797e0ecfd29bf0b8965ef27c2efac218394889a:
+    compile: true
+    unit_tests: true
+tip: 5797e0ecfd29bf0b8965ef27c2efac218394889a
