@@ -32,6 +32,16 @@ type History struct {
 // commit:
 // 	test: true
 
+func (h *History) Run(tasks ...Task) {
+	for _, t := range tasks {
+		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
+			h.Add(commit, t.Name, false)
+			continue
+		}
+		h.Add(commit, t.Name, true)
+	}
+}
+
 func (h *History) Add(commit string, testName string, testValue bool) {
 	if h.States == nil {
 		h.States = make(map[string]map[string]bool)
@@ -110,16 +120,7 @@ func main() {
 		return
 	}
 
-	for _, t := range tasks {
-		fmt.Print("task['" + t.Name + "'] : ")
-		if err := exec.Command("/bin/zsh", "-c", t.Test).Run(); err != nil {
-			fmt.Println("FAIL")
-			repo.Add(commit, t.Name, false)
-			continue
-		}
-		fmt.Println("PASS")
-		repo.Add(commit, t.Name, true)
-	}
+	repo.Run(tasks...)
 
 	repo.Tip = commit
 
