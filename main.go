@@ -52,6 +52,36 @@ func (r *RunReport) Add(testName string, state bool, reward int) {
 	r.Rewards[testName] = reward
 }
 
+func (r *RunReport) Print() {
+	if len(r.States) < 1 {
+		return
+	}
+	fmt.Println("States:")
+	for n, s := range r.States {
+		fmt.Println(n+":", wordFor(s))
+	}
+
+	if len(r.Rewards) < 1 {
+		return
+	}
+	fmt.Println("Rewards:")
+	total := 0
+	for n, s := range r.Rewards {
+		fmt.Println(n+":", s)
+		total += s
+	}
+	if len(r.Rewards) > 1 {
+		fmt.Println("total:", total)
+	}
+}
+
+func wordFor(b bool) string {
+	if b == true {
+		return "PASS"
+	}
+	return "FAIL"
+}
+
 // commit:
 // 	test: true
 
@@ -192,10 +222,13 @@ func main() {
 		return
 	}
 
-	if err := repo.Run(tasks...); err != nil {
+	report, err := repo.Run(tasks...)
+	if err != nil {
 		fmt.Println("fatal:", err)
 		return
 	}
+
+	report.Print()
 
 	if err := repo.Save(); err != nil {
 		fmt.Println("fatal:", err)
